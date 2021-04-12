@@ -365,6 +365,7 @@ class StreamsView(urwid.Frame):
     def keypress(self, size: urwid_Size, key: str) -> Optional[str]:
         if is_command_key("SEARCH_STREAMS", key):
             self.set_focus("header")
+            self.stream_search_box.set_caption("")
             return key
         elif is_command_key("GO_BACK", key):
             self.stream_search_box.reset_search_text()
@@ -477,6 +478,7 @@ class TopicsView(urwid.Frame):
             self.view.body.focus_col = 1
         if is_command_key("SEARCH_TOPICS", key):
             self.set_focus("header")
+            self.topic_search_box.set_caption("")
             self.header_list.set_focus(2)
             return key
         elif is_command_key("GO_BACK", key):
@@ -753,6 +755,7 @@ class RightColumnView(urwid.Frame):
         if is_command_key("SEARCH_PEOPLE", key):
             self.allow_update_user_list = False
             self.set_focus("header")
+            self.user_search.set_caption("")
             return key
         elif is_command_key("GO_BACK", key):
             self.user_search.reset_search_text()
