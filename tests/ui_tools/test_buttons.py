@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import pytest
 from pytest import param as case
@@ -15,6 +15,7 @@ from zulipterminal.ui_tools.buttons import (
     TopButton,
     TopicButton,
     UserButton,
+    urwidMarkupTuple,
 )
 from zulipterminal.urwid_types import urwid_Size
 
@@ -37,9 +38,9 @@ class TestTopButton:
     def top_button(self, mocker: MockerFixture) -> TopButton:
         top_button = TopButton(
             controller=self.controller,
-            caption="caption",
+            prefix_markup=("style", "-"),
+            label_markup=(None, "caption"),
             show_function=self.show_function,
-            prefix_character="-",
             count=0,
         )
         return top_button
@@ -47,9 +48,12 @@ class TestTopButton:
     def test_init(self, mocker: MockerFixture, top_button: TopButton) -> None:
 
         assert top_button.controller == self.controller
-        assert top_button._caption == "caption"
+        assert top_button._prefix_markup == ("style", "-")
+        assert top_button._label_markup == (None, "caption")
+        assert top_button._suffix_markup == (None, "")
         assert top_button.show_function == self.show_function
-        assert top_button.prefix_character == "-"
+
+        assert top_button._caption == "caption"
         assert top_button.original_color is None
         assert top_button.count == 0
         assert top_button.count_style is None
@@ -96,7 +100,8 @@ class TestTopButton:
         )
 
     @pytest.mark.parametrize(
-        "prefix, expected_prefix", [("-", [" ", "-", " "]), ("", [" "])]
+        "prefix, expected_prefix",
+        [((None, "-"), [" ", (None, "-"), " "]), ((None, ""), [" "])],
     )
     @pytest.mark.parametrize("text_color", ["color", None])
     @pytest.mark.parametrize(
@@ -112,11 +117,11 @@ class TestTopButton:
         self,
         mocker: MockerFixture,
         top_button: TopButton,
-        prefix: str,
-        expected_prefix: List[str],
+        prefix: urwidMarkupTuple,
+        expected_prefix: List[Union[str, urwidMarkupTuple]],
         text_color: Optional[str],
-        count_text: Tuple[Optional[str], str],
-        expected_suffix: List[Any],
+        count_text: urwidMarkupTuple,
+        expected_suffix: List[Union[str, urwidMarkupTuple]],
     ) -> None:
         top_button.prefix_character = prefix
         top_button.button_prefix = mocker.patch(MODULE + ".urwid.Text")
@@ -256,10 +261,9 @@ class TestTopicButton:
         )
 
         top_button.assert_called_once_with(
-            caption=title,
-            prefix_character="",
+            label_markup=(None, title),
+            suffix_markup=("unread_count", ""),
             show_function=mocker.ANY,  # partial
-            count_style="unread_count",
             **params,
         )
         assert topic_button.stream_name == stream_name

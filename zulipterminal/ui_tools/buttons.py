@@ -1,6 +1,6 @@
 import re
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 from urllib.parse import urljoin, urlparse
 
 import urwid
@@ -19,25 +19,31 @@ from zulipterminal.helper import StreamData, hash_util_decode
 from zulipterminal.urwid_types import urwid_Size
 
 
+urwidMarkupTuple = Tuple[Optional[str], str]
+
+
 class TopButton(urwid.Button):
     def __init__(
         self,
         *,
         controller: Any,
-        caption: str,
+        prefix_markup: urwidMarkupTuple = (None, ""),
+        label_markup: urwidMarkupTuple,
+        suffix_markup: urwidMarkupTuple = (None, ""),
         show_function: Callable[[], Any],
-        prefix_character: Union[str, Tuple[Any, str]] = "\N{BULLET}",
-        text_color: Optional[str] = None,
         count: int = 0,
-        count_style: Optional[str] = None,
     ) -> None:
         self.controller = controller
-        self._caption = caption
+        self._caption = label_markup[1]  # kept for easier transition.
+        self._prefix_markup = prefix_markup
+        self._label_markup = label_markup
+        self._suffix_markup = suffix_markup
         self.show_function = show_function
-        self.prefix_character = prefix_character
-        self.original_color = text_color
+        self.prefix_character = prefix_markup  # kept for easier transition.
+        self.original_color = label_markup[0]  # kept for easier transition.
         self.count = count
-        self.count_style = count_style
+        self.count_style = suffix_markup[0]  # kept for easier transition.
+        text_color = label_markup[0]  # kept for easier transition.
 
         super().__init__("")
 
@@ -73,7 +79,7 @@ class TopButton(urwid.Button):
     def update_widget(
         self, count_text: Tuple[Optional[str], str], text_color: Optional[str]
     ) -> Any:
-        if self.prefix_character:
+        if self.prefix_character[1]:
             prefix = [" ", self.prefix_character, " "]
         else:
             prefix = [" "]
@@ -106,11 +112,10 @@ class HomeButton(TopButton):
 
         super().__init__(
             controller=controller,
-            caption=button_text,
+            label_markup=(None, button_text),
+            suffix_markup=("unread_count", ""),
             show_function=controller.narrow_to_all_messages,
-            prefix_character="",
             count=count,
-            count_style="unread_count",
         )
 
 
@@ -120,11 +125,10 @@ class PMButton(TopButton):
 
         super().__init__(
             controller=controller,
-            caption=button_text,
+            label_markup=(None, button_text),
+            suffix_markup=("unread_count", ""),
             show_function=controller.narrow_to_all_pm,
-            prefix_character="",
             count=count,
-            count_style="unread_count",
         )
 
 
@@ -134,11 +138,10 @@ class MentionedButton(TopButton):
 
         super().__init__(
             controller=controller,
-            caption=button_text,
+            label_markup=(None, button_text),
+            suffix_markup=("unread_count", ""),
             show_function=controller.narrow_to_all_mentions,
-            prefix_character="",
             count=count,
-            count_style="unread_count",
         )
 
 
@@ -148,11 +151,10 @@ class StarredButton(TopButton):
 
         super().__init__(
             controller=controller,
-            caption=button_text,
+            label_markup=(None, button_text),
+            suffix_markup=("starred_count", ""),
             show_function=controller.narrow_to_all_starred,
-            prefix_character="",
             count=count,  # Number of starred messages, not unread count
-            count_style="starred_count",
         )
 
 
@@ -196,11 +198,11 @@ class StreamButton(TopButton):
         )
         super().__init__(
             controller=controller,
-            caption=self.stream_name,
+            prefix_markup=(self.color, stream_marker),
+            label_markup=(None, self.stream_name),
+            suffix_markup=("unread_count", ""),
             show_function=narrow_function,
-            prefix_character=(self.color, stream_marker),
             count=count,
-            count_style="unread_count",
         )
 
         # Mark muted streams 'M' during button creation.
@@ -251,10 +253,9 @@ class UserButton(TopButton):
 
         super().__init__(
             controller=controller,
-            caption=user["full_name"],
+            prefix_markup=(color, state_marker),
+            label_markup=(color, user["full_name"]),
             show_function=self._narrow_with_compose,
-            prefix_character=(color, state_marker),
-            text_color=color,
             count=count,
         )
         if is_current_user:
@@ -300,11 +301,10 @@ class TopicButton(TopButton):
         )
         super().__init__(
             controller=controller,
-            caption=self.topic_name,
+            label_markup=(None, self.topic_name),
+            suffix_markup=("unread_count", ""),
             show_function=narrow_function,
-            prefix_character="",
             count=count,
-            count_style="unread_count",
         )
 
         if controller.model.is_muted_topic(self.stream_id, self.topic_name):
