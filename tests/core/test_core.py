@@ -122,6 +122,7 @@ class TestController:
     ) -> None:
         controller.model.narrow = []
         controller.model.index = index_stream
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
         controller.model.stream_dict = {
             stream_id: {
@@ -175,6 +176,7 @@ class TestController:
         controller.model.narrow = initial_narrow
         controller.model.index = index_multiple_topic_msg
         controller.model.stream_id = initial_stream_id
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
         controller.model.stream_dict = {
             stream_id: {
@@ -212,6 +214,7 @@ class TestController:
     ) -> None:
         controller.model.narrow = []
         controller.model.index = index_user
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
         controller.model.user_id = 5140
         controller.model.user_email = "some@email"
@@ -243,6 +246,7 @@ class TestController:
     ) -> None:
         controller.model.narrow = [["stream", "PTEST"]]
         controller.model.index = index_all_messages
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
         controller.model.user_email = "some@email"
         controller.model.user_id = 1
@@ -271,6 +275,7 @@ class TestController:
     ) -> None:
         controller.model.narrow = []
         controller.model.index = index_user
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
         controller.model.user_id = 1
         controller.model.user_email = "some@email"
@@ -300,6 +305,7 @@ class TestController:
                 "color": "#ffffff",
             }
         }
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
 
         controller.narrow_to_all_starred()  # FIXME: Add id narrowing test
@@ -327,6 +333,7 @@ class TestController:
                 "color": "#ffffff",
             }
         }
+        controller.view = mocker.Mock()
         controller.view.message_view = mocker.patch("urwid.ListBox")
 
         controller.narrow_to_all_mentions()  # FIXME: Add id narrowing test
@@ -462,7 +469,7 @@ class TestController:
         get_message.assert_called_once_with(
             num_after=0, num_before=30, anchor=10000000000
         )
-        create_msg.assert_called_once_with(controller.model, msg_ids)
+        create_msg.assert_called_once_with(controller.model, controller.view, msg_ids)
         assert controller.model.index == dict(
             index_search_messages, **{"search": msg_ids}
         )

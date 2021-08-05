@@ -1259,7 +1259,7 @@ class Model:
             else:
                 last_message = None
             msg_w_list = create_msg_box_list(
-                self, [message["id"]], last_message=last_message
+                self, self.controller.view, [message["id"]], last_message=last_message
             )
             if not msg_w_list:
                 return
@@ -1469,7 +1469,7 @@ class Model:
                     # current narrow.
                     if not view.message_view.log:
                         msg_w_list = create_msg_box_list(
-                            self, [msg_id], last_message=msg_box.last_message
+                            self, view, [msg_id], last_message=msg_box.last_message
                         )
                         if msg_w_list:
                             # FIXME Still depends on widget
@@ -1483,7 +1483,7 @@ class Model:
                     return
 
                 msg_w_list = create_msg_box_list(
-                    self, [msg_id], last_message=msg_box.last_message
+                    self, view, [msg_id], last_message=msg_box.last_message
                 )
                 if not msg_w_list:
                     return
@@ -1498,6 +1498,7 @@ class Model:
                         next_msg_w = view.message_view.log[msg_pos + 1]
                         msg_w_list = create_msg_box_list(
                             self,
+                            view,
                             [next_msg_w.original_widget.message["id"]],
                             last_message=new_msg_w.original_widget.message,
                         )
@@ -1518,7 +1519,9 @@ class Model:
                 msg_id = msg_box.message["id"]
                 last_msg = msg_box.last_message
                 msg_pos = view.message_view.log.index(msg_w)
-                msg_w_list = create_msg_box_list(self, [msg_id], last_message=last_msg)
+                msg_w_list = create_msg_box_list(
+                    self, view, [msg_id], last_message=last_msg
+                )
                 view.message_view.log[msg_pos] = msg_w_list[0]
         self.controller.update_screen()
 
