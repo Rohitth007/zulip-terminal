@@ -1158,6 +1158,7 @@ class TestRightColumnView:
 class TestLeftColumnView:
     @pytest.fixture(autouse=True)
     def mock_external_classes(self, mocker):
+        mocker.patch(SUBDIR + ".buttons.create_focus_map")
         self.view = mocker.Mock()
         self.view.model = mocker.Mock()
         self.view.model.unread_counts = {  # Minimal, though an UnreadCounts
