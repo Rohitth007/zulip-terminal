@@ -56,6 +56,7 @@ REQUIRED_STYLES = {
     'edit_time'       : 'bold',
     'current_user'    : '',
     'muted'           : 'bold',
+    'muted_selected'  : 'bold',
     'popup_border'    : 'bold',
     'popup_category'  : 'bold',
     'popup_contrast'  : 'standout',
