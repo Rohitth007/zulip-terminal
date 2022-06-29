@@ -547,7 +547,7 @@ class MiddleColumnView(urwid.Frame):
         self.model = model
         self.controller = model.controller
         self.view = view
-        self.last_unread_topic = None
+        self.next_unread_topic = None
         self.last_unread_pm = None
         self.search_box = search_box
         view.message_view = message_view
@@ -555,24 +555,28 @@ class MiddleColumnView(urwid.Frame):
 
     def get_next_unread_topic(self) -> Optional[Tuple[int, str]]:
         unread_topics = list(self.model.unread_counts["unread_topics"].keys())
+        if not unread_topics:
+            return None
+
+        # So that we can wrap around when we reach the end.
+        unread_topics.append(unread_topics[0])
+
+        # Start from beginning when unknown.
         narrow_to_topic = False
-        if self.last_unread_topic not in unread_topics:
+        if self.next_unread_topic == None:
             narrow_to_topic = True
-        # loop over topics list twice
-        # for the case that last_unread_topic was
-        # the last valid unread_topic in topics list.
-        for unread_topic in unread_topics * 2:
+
+        for i, unread_topic in enumerate(unread_topics):
+            if unread_topic == self.next_unread_topic:
+                narrow_to_topic = True
             stream_id, topic = unread_topic
             if (
                 not self.model.is_muted_topic(stream_id, topic)
                 and not self.model.is_muted_stream(stream_id)
                 and narrow_to_topic
             ):
-                self.last_unread_topic = unread_topic
+                self.next_unread_topic = unread_topics[i + 1]
                 return unread_topic
-            if unread_topic == self.last_unread_topic:
-                narrow_to_topic = True
-        return None
 
     def get_next_unread_pm(self) -> Optional[int]:
         pms = list(self.model.unread_counts["unread_pms"].keys())
