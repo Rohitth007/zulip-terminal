@@ -561,6 +561,12 @@ class MiddleColumnView(urwid.Frame):
         # So that we can wrap around when we reach the end.
         unread_topics.append(unread_topics[0])
 
+        if self.next_unread_topic == (0, ""):
+            narrow = self.model.narrow
+            if narrow[0][0] == "stream":
+                stream_id = self.model.stream_id_from_name(narrow[0][1])
+                self.next_unread_topic = (stream_id, "")
+
         # This is so that we can wrap around inside
         # a stream until all topics are read.
         count_topics = 0
@@ -577,13 +583,22 @@ class MiddleColumnView(urwid.Frame):
         if pos_to_place_item:
             unread_topics.insert(pos_to_place_item, item_to_replicate)
 
+        if count_topics == 0:
+            self.next_unread_topic = (0, "")
+
         # Start from beginning when unknown.
+        # If within the stream then choose the first topic with same stream_id
         narrow_to_topic = False
+        use_stream_id = False
         if self.next_unread_topic == (0, ""):
             narrow_to_topic = True
+        elif self.next_unread_topic[1] == "":
+            use_stream_id = True
 
         for i, unread_topic in enumerate(unread_topics):
             if unread_topic == self.next_unread_topic:
+                narrow_to_topic = True
+            elif use_stream_id and unread_topic[0] == self.next_unread_topic[0]:
                 narrow_to_topic = True
             stream_id, topic = unread_topic
             if (
