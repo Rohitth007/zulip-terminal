@@ -547,7 +547,7 @@ class MiddleColumnView(urwid.Frame):
         self.model = model
         self.controller = model.controller
         self.view = view
-        self.next_unread_topic = None
+        self.next_unread_topic = (0, "")
         self.last_unread_pm = None
         self.search_box = search_box
         view.message_view = message_view
@@ -561,9 +561,25 @@ class MiddleColumnView(urwid.Frame):
         # So that we can wrap around when we reach the end.
         unread_topics.append(unread_topics[0])
 
+        # This is so that we can wrap around inside
+        # a stream until all topics are read.
+        count_topics = 0
+        pos_to_place_item = 0
+        for i, unread_topic in enumerate(unread_topics):
+            if unread_topic[0] == self.next_unread_topic[0]:
+                if count_topics == 0:
+                    item_to_replicate = unread_topic
+                count_topics += 1
+            elif count_topics > 1:
+                pos_to_place_item = i
+                break
+
+        if pos_to_place_item:
+            unread_topics.insert(pos_to_place_item, item_to_replicate)
+
         # Start from beginning when unknown.
         narrow_to_topic = False
-        if self.next_unread_topic == None:
+        if self.next_unread_topic == (0, ""):
             narrow_to_topic = True
 
         for i, unread_topic in enumerate(unread_topics):
