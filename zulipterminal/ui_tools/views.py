@@ -547,26 +547,67 @@ class MiddleColumnView(urwid.Frame):
         self.model = model
         self.controller = model.controller
         self.view = view
-        self.last_unread_topic = None
+        self.next_unread_topic = (0, "")
         self.last_unread_pm = None
         self.search_box = search_box
         view.message_view = message_view
         super().__init__(message_view, header=search_box, footer=write_box)
 
     def get_next_unread_topic(self) -> Optional[Tuple[int, str]]:
-        topics = list(self.model.unread_counts["unread_topics"].keys())
-        next_topic = False
-        for topic in topics:
-            if next_topic is True:
-                self.last_unread_topic = topic
-                return topic
-            if topic == self.last_unread_topic:
-                next_topic = True
-        if len(topics) > 0:
-            topic = topics[0]
-            self.last_unread_topic = topic
-            return topic
-        return None
+        unread_topics = list(self.model.unread_counts["unread_topics"].keys())
+        if not unread_topics:
+            return None
+
+        # So that we can wrap around when we reach the end.
+        unread_topics.append(unread_topics[0])
+
+        if self.next_unread_topic == (0, ""):
+            narrow = self.model.narrow
+            if narrow[0][0] == "stream":
+                stream_id = self.model.stream_id_from_name(narrow[0][1])
+                self.next_unread_topic = (stream_id, "")
+
+        # This is so that we can wrap around inside
+        # a stream until all topics are read.
+        count_topics = 0
+        pos_to_place_item = 0
+        for i, unread_topic in enumerate(unread_topics):
+            if unread_topic[0] == self.next_unread_topic[0]:
+                if count_topics == 0:
+                    item_to_replicate = unread_topic
+                count_topics += 1
+            elif count_topics > 1:
+                pos_to_place_item = i
+                break
+
+        if pos_to_place_item:
+            unread_topics.insert(pos_to_place_item, item_to_replicate)
+
+        if count_topics == 0:
+            self.next_unread_topic = (0, "")
+
+        # Start from beginning when unknown.
+        # If within the stream then choose the first topic with same stream_id
+        narrow_to_topic = False
+        use_stream_id = False
+        if self.next_unread_topic == (0, ""):
+            narrow_to_topic = True
+        elif self.next_unread_topic[1] == "":
+            use_stream_id = True
+
+        for i, unread_topic in enumerate(unread_topics):
+            if unread_topic == self.next_unread_topic:
+                narrow_to_topic = True
+            elif use_stream_id and unread_topic[0] == self.next_unread_topic[0]:
+                narrow_to_topic = True
+            stream_id, topic = unread_topic
+            if (
+                not self.model.is_muted_topic(stream_id, topic)
+                and not self.model.is_muted_stream(stream_id)
+                and narrow_to_topic
+            ):
+                self.next_unread_topic = unread_topics[i + 1]
+                return unread_topic
 
     def get_next_unread_pm(self) -> Optional[int]:
         pms = list(self.model.unread_counts["unread_pms"].keys())

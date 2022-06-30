@@ -578,6 +578,7 @@ class Controller:
     def narrow_to_stream(
         self, *, stream_name: str, contextual_message_id: Optional[int] = None
     ) -> None:
+        self.view.middle_column.next_unread_topic = (0, "")
         self._narrow_to(anchor=contextual_message_id, stream=stream_name)
 
     def narrow_to_topic(
